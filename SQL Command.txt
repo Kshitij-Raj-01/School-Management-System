@@ -1,0 +1,230 @@
+CREATE DATABASE school;
+USE school;
+
+-- 1. USERS TABLE (For Admins, Finance, StudentManager)
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    role ENUM('admin', 'finance', 'studentManager') NOT NULL,
+    image_url TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 2. STUDENTS TABLE (Matches studentSlice.ts)
+CREATE TABLE students (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    admission_no VARCHAR(50) UNIQUE,
+    roll_no VARCHAR(50),
+    student_name VARCHAR(255) NOT NULL,
+    classname VARCHAR(50),
+    address TEXT,
+    contact_no VARCHAR(20),
+    gender VARCHAR(20),
+    dob date,
+    age INT,
+    email VARCHAR(255),
+    password_hash VARCHAR(255) DEFAULT NULL, -- For Student Login
+    registration_fees VARCHAR(50),
+    image TEXT,
+    uses_bus BOOLEAN DEFAULT FALSE,
+    -- Extra fields from your slice
+    pan_no VARCHAR(50),
+    weight VARCHAR(20),
+    height VARCHAR(20),
+    aadhar_no VARCHAR(50),
+    previous_school_name VARCHAR(255),
+    alternate_mobile_no VARCHAR(20),
+    father_name VARCHAR(255),
+    father_aadhar_no VARCHAR(50),
+    mother_name VARCHAR(255),
+    mother_aadhar_no VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 3. TEACHERS TABLE (Matches teacherSlice.ts)
+CREATE TABLE teachers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    teacher_name VARCHAR(255) NOT NULL,
+    email VARCHAR(255),
+    pan_no VARCHAR(50),
+    aadhar_no VARCHAR(50),
+    password_hash VARCHAR(255) DEFAULT NULL, -- For Teacher Login
+    address TEXT,
+    gender VARCHAR(20),
+    contact_no VARCHAR(20),
+    qualification VARCHAR(255),
+    subjects_to_teach JSON, -- Stores ["Math", "Science"]
+    class_teacher_of VARCHAR(50),
+    previous_school VARCHAR(255),
+    dob date,
+    age INT,
+    estimated_salary VARCHAR(50),
+    image TEXT,
+    joining_date VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 4. STAFF TABLE (Matches staffSlice.ts)
+CREATE TABLE staff (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    staff_name VARCHAR(255) NOT NULL,
+    email VARCHAR(255),
+    pan_no VARCHAR(50),
+    aadhar_no VARCHAR(50),
+    address TEXT,
+    work_role VARCHAR(100),
+    gender VARCHAR(20),
+    contact_no VARCHAR(20),
+    qualification VARCHAR(255),
+    previous_school VARCHAR(255),
+    dob date,
+    age INT,
+    salary VARCHAR(50),
+    image TEXT,
+    joining_date VARCHAR(50)
+);
+
+-- 5. FEES TABLE (Matches feeSlice.ts)
+CREATE TABLE fee_collections (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    student_id INT,
+    student_name VARCHAR(255),
+    classname VARCHAR(50),
+    roll_no VARCHAR(50),
+    month VARCHAR(20),
+    year VARCHAR(20),
+    monthly_fees DECIMAL(10,2),
+    exam_fees DECIMAL(10,2),
+    other_fee DECIMAL(10,2),
+    fine int,
+    total_amount DECIMAL(10,2),
+    payment_date DATETIME,
+    notes text,
+    payment_mode text,
+    receipt_no text,
+    uses_bus TINYINT(1) DEFAULT 0,
+    FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE SET NULL
+);
+
+-- 6. TIMETABLE TABLE
+CREATE TABLE timetable (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    classname VARCHAR(50),
+    subject VARCHAR(100),
+    teacher_id INT,
+    teacher_name VARCHAR(255),
+    day VARCHAR(20),
+    start_time VARCHAR(20),
+    end_time VARCHAR(20)
+);
+
+-- 7. SALARIES TABLE
+CREATE TABLE salaries (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    employee_id VARCHAR(50),
+    employee_name VARCHAR(255),
+    role VARCHAR(50), -- 'Teacher' or 'Staff'
+    month VARCHAR(20),
+    year VARCHAR(20),
+    amount DECIMAL(10, 2),
+    payment_date DATETIME,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 8. NOTICES TABLE
+CREATE TABLE notices (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255),
+    content TEXT,
+    target_audience VARCHAR(50),
+    posted_by VARCHAR(100),
+    is_important BOOLEAN DEFAULT FALSE,
+    date DATETIME,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 9. ATTENDANCE TABLE
+CREATE TABLE attendance (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    date DATE,
+    classname VARCHAR(50),
+    subject VARCHAR(100) DEFAULT NULL,
+    -- We store the list of students & their status as a JSON array
+    student_records JSON, 
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 10. EXAM SCHEDULES
+-- Stores the schedule for a specific class
+CREATE TABLE exam_schedules (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    exam_name VARCHAR(255),
+    exam_date DATE,
+    classname VARCHAR(50), -- Defines which class this schedule is for
+    subjects JSON,         -- Stores array of subjects { subject, date, time }
+    allow_download BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 11. ADMIT CARD ACCESS
+-- Controls which students can download their admit cards
+CREATE TABLE admit_card_access (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    student_id INT,
+    is_allowed BOOLEAN DEFAULT FALSE,
+    allowed_date DATETIME,
+    FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE
+);
+
+-- 12. EXAM RESULTS TABLE
+CREATE TABLE exam_results (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    student_id INT,
+    student_name VARCHAR(255),
+    admission_no VARCHAR(50),
+    classname VARCHAR(50),
+    exam_name VARCHAR(100), -- e.g., "Mid Term", "Final"
+    subject VARCHAR(100),
+    marks_obtained DECIMAL(5, 2),
+    total_marks DECIMAL(5, 2),
+    grade VARCHAR(5),
+    remarks TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE
+);
+
+-- 13. EXPENSES TABLE
+CREATE TABLE expenses (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    category VARCHAR(100), -- e.g., 'Maintenance', 'Supplies', 'Events'
+    description TEXT,
+    date DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 14. LANDING PAGE CONTENT
+-- Stores the entire JSON content in one row
+CREATE TABLE site_content (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    section_name VARCHAR(50) UNIQUE, -- 'landing_page'
+    content JSON,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Insert Default Config Row
+INSERT INTO site_content (section_name, content) VALUES ('landing_page', '{}');
+
+--15. FEE STRUCTURE --
+CREATE TABLE fee_structure (
+    classname VARCHAR(20) PRIMARY KEY,
+    monthly_fee INT DEFAULT 0,
+    annual_fee INT DEFAULT 0,
+    exam_fee INT DEFAULT 0,
+    other_fee INT DEFAULT 0,
+    bus_fee INT DEFAULT 0,
+    fine INT DEFAULT 0
+);
